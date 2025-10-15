@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  mariadb-auth:
+    image: mariadb:12.0.2       # updated version
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: authdb
+      MARIADB_USER: app
+      MARIADB_PASSWORD: app
+    ports:
+      - "3307:3306"
+
+  mariadb-poll:
+    image: mariadb:12.0.2       # updated version
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: polldb
+      MARIADB_USER: app
+      MARIADB_PASSWORD: app
+    ports:
+      - "3308:3306"
