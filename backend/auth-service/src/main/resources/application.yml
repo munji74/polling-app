@@ -1,0 +1,19 @@
+server:
+  port: 8081
+
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/authdb
+    username: app
+    password: app
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.format_sql: true
+      hibernate.dialect: org.hibernate.dialect.MariaDBDialect
+
+app:
+  jwt:
+    secret: Genie1Out2The3Bottle100%0   # keep SAME across services
+    expires-in: 3600000                 # 1 hour
