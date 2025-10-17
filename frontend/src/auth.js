@@ -1,23 +1,26 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { setToken, getToken } from "./api";
 
-const AuthCtx = createContext();
+const AuthCtx = createContext(null);
 
 export function AuthProvider({ children }) {
   const [token, setTok] = useState(getToken());
-  const [user, setUser] = useState(null); // we can derive from JWT later if needed
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     setToken(token);
   }, [token]);
 
   const login = (t) => setTok(t);
-  const logout = () => { setTok(null); setUser(null); };
+  const logout = () => {
+    setTok(null);
+    setUser(null);
+  };
 
-  return (
-    <AuthCtx.Provider value={{ token, user, login, logout }}>
-      {children}
-    </AuthCtx.Provider>
+  return React.createElement(
+    AuthCtx.Provider,
+    { value: { token, user, login, logout } },
+    children
   );
 }
 
