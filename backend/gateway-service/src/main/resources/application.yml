@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      default-filters:
+        - RemoveHopByHopHeaders=connection,keep-alive,proxy-authenticate,proxy-authorization,te,trailers,transfer-encoding,upgrade
+        - PreserveHostHeader
+      routes:
+        - id: auth
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+        - id: poll
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/**
+          filters:
+            - StripPrefix=1
+
+spring:
+  webflux:
+    cors:
+      mappings:
+        - path: "/**"
+          allowedOrigins: "http://localhost:5173"
+          allowedMethods: "*"
+          allowedHeaders: "*"
+          allowCredentials: true
+          maxAge: 3600
