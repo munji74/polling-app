@@ -20,8 +20,6 @@ spring:
             - Path=/api/**
           filters:
             - StripPrefix=1
-
-spring:
   webflux:
     cors:
       mappings:
