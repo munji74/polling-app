@@ -5,31 +5,35 @@ spring:
   cloud:
     gateway:
       routes:
-        # Put AUTH FIRST (more specific)
-        - id: auth
+        # AUTH goes to :8081
+        - id: auth-route
           uri: http://localhost:8081
           predicates:
             - Path=/api/auth/**
-        # Then POLL (more general)
-        - id: poll
+          # DO NOT strip /api unless your auth-service expects no /api prefix
+          # filters:
+          #   - StripPrefix=0
+
+        # EVERYTHING ELSE under /api/** goes to poll-service :8082
+        - id: poll-route
           uri: http://localhost:8082
           predicates:
             - Path=/api/**
-  webflux:
-    cors:
-      mappings:
-        - path: "/**"
-          allowedOrigins: "http://localhost:5173"
-          allowedMethods: "*"
-          allowedHeaders: "*"
-          allowCredentials: true
-          maxAge: 3600
+          # IMPORTANT: Do NOT StripPrefix here if your poll-service endpoints are /api/polls
+          # filters:
+          #   - StripPrefix=0
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: "health,info,gateway"
-  endpoint:
-    gateway:
-      enabled: true
+      # CORS (so frontend :5173 can call gateway :8080)
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: ["http://localhost:5173"]
+            allowedMethods: [GET, POST, PUT, DELETE, PATCH, OPTIONS]
+            allowedHeaders: ["*"]
+            exposedHeaders: ["*"]
+            allowCredentials: true
+
+      # If downstream services also add CORS, dedupe
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
