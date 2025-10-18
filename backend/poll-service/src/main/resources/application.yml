@@ -15,4 +15,4 @@ spring:
 
 app:
   jwt:
-    secret: Genie1Out2The3Bottle100%0  # MUST MATCH auth-service
+    secret: "i8bU2JfE0Qj1oZ4r7xNA3wPq6sT9vYc2Ld5mHgKzR8nW4eX6pQ1tV3yZ5uA7bC9d"

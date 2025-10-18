@@ -1,42 +1,47 @@
 package com.example.pollservice.api;
 
+import com.example.pollservice.api.dto.CreatePollRequest;
+import com.example.pollservice.api.dto.PollResponse;
+import com.example.pollservice.api.dto.VoteRequest;
+import com.example.pollservice.poll.PollService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
+import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
 public class PollController {
 
-    @GetMapping("/health")
-    public Map<String, Object> health() {
-        return Map.of("status", "ok", "time", Instant.now().toString());
-    }
+    private final PollService polls;
+    public PollController(PollService polls) { this.polls = polls; }
 
-    // public: landing page
+    // PUBLIC
     @GetMapping("/polls")
-    public List<Map<String, Object>> listPolls() {
-        // temporary static response to prove wiring; we’ll back this with DB next
-        return List.of(
-                Map.of(
-                        "id", 1, "question", "Favorite JS bundler?",
-                        "expiresAt", Instant.now().plusSeconds(3600).toString(),
-                        "status", "ACTIVE",
-                        "options", List.of(
-                                Map.of("id", 10, "text", "Vite", "votes", 0),
-                                Map.of("id", 11, "text", "Webpack", "votes", 0)
-                        ),
-                        "totalVotes", 0
-                )
-        );
+    public List<PollResponse> list() { return polls.listAll(); }
+
+    // PUBLIC
+    @GetMapping("/polls/{id}")
+    public PollResponse get(@PathVariable Long id) { return polls.getOne(id); }
+
+    // AUTH REQUIRED (SecurityConfig enforces it)
+    @PostMapping("/polls")
+    public ResponseEntity<PollResponse> create(@RequestBody @Valid CreatePollRequest req, Authentication auth) {
+        var email = auth.getName(); // set by JwtAuthFilter
+        var created = polls.create(req, email);
+        return ResponseEntity.created(URI.create("/api/polls/" + created.id())).body(created);
     }
 
-    // protected: create
-    @PostMapping("/polls")
-    public ResponseEntity<?> createPoll() {
-        return ResponseEntity.status(201).body(Map.of("message", "Created (stub)"));
+    // AUTH REQUIRED
+    @PostMapping("/polls/{id}/votes")
+    public ResponseEntity<PollResponse> vote(@PathVariable Long id,
+                                             @RequestBody @Valid VoteRequest req,
+                                             Authentication auth) {
+        var email = auth.getName();
+        var updated = polls.vote(id, req.optionId(), email);
+        return ResponseEntity.ok(updated);
     }
 }
