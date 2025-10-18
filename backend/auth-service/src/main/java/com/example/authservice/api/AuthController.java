@@ -29,15 +29,14 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest req) {
-        if (users.existsByEmail(req.email())) {
+        if (users.existsByEmail(req.email().toLowerCase())) {
             return ResponseEntity.badRequest().body(Map.of("error", "Email already in use"));
         }
-        User u = User.builder()
-                .name(req.name())
-                .email(req.email().toLowerCase())
-                .passwordHash(encoder.encode(req.password()))
-                .roles(Set.of(Role.USER))
-                .build();
+        User u = new User();
+        u.setName(req.name());
+        u.setEmail(req.email().toLowerCase());
+        u.setPasswordHash(encoder.encode(req.password()));
+        u.setRoles(Set.of(Role.USER));
         users.save(u);
         return ResponseEntity.ok(Map.of("message", "Registered"));
     }

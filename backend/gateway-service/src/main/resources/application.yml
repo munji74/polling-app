@@ -4,22 +4,17 @@ server:
 spring:
   cloud:
     gateway:
-      default-filters:
-        - RemoveHopByHopHeaders=connection,keep-alive,proxy-authenticate,proxy-authorization,te,trailers,transfer-encoding,upgrade
-        - PreserveHostHeader
       routes:
+        # Put AUTH FIRST (more specific)
         - id: auth
           uri: http://localhost:8081
           predicates:
             - Path=/api/auth/**
-          filters:
-            - StripPrefix=1
+        # Then POLL (more general)
         - id: poll
           uri: http://localhost:8082
           predicates:
             - Path=/api/**
-          filters:
-            - StripPrefix=1
   webflux:
     cors:
       mappings:
@@ -29,3 +24,12 @@ spring:
           allowedHeaders: "*"
           allowCredentials: true
           maxAge: 3600
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,gateway"
+  endpoint:
+    gateway:
+      enabled: true
