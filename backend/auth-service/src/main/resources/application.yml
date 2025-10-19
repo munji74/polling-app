@@ -13,14 +13,11 @@ spring:
       hibernate.format_sql: true
       hibernate.dialect: org.hibernate.dialect.MariaDBDialect
 
-# ADD/VERIFY THESE
 app:
   jwt:
-    # >= 32 chars (256-bit). Use something long & random.
     secret: "i8bU2JfE0Qj1oZ4r7xNA3wPq6sT9vYc2Ld5mHgKzR8nW4eX6pQ1tV3yZ5uA7bC9d"
-    expires-in: 3600000   # 1 hour in ms
+    expires-in: 3600000
 
-# (Optional) keep DEBUG on while we finish
 logging:
   level:
     org.springframework.security: DEBUG

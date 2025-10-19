@@ -5,25 +5,18 @@ spring:
   cloud:
     gateway:
       routes:
-        # AUTH goes to :8081
+        # AUTH FIRST: ensure /api/auth/** never hits the catch-all
         - id: auth-route
           uri: http://localhost:8081
           predicates:
             - Path=/api/auth/**
-          # DO NOT strip /api unless your auth-service expects no /api prefix
-          # filters:
-          #   - StripPrefix=0
 
-        # EVERYTHING ELSE under /api/** goes to poll-service :8082
+        # Everything else to poll-service
         - id: poll-route
           uri: http://localhost:8082
           predicates:
             - Path=/api/**
-          # IMPORTANT: Do NOT StripPrefix here if your poll-service endpoints are /api/polls
-          # filters:
-          #   - StripPrefix=0
 
-      # CORS (so frontend :5173 can call gateway :8080)
       globalcors:
         add-to-simple-url-handler-mapping: true
         corsConfigurations:
@@ -34,6 +27,9 @@ spring:
             exposedHeaders: ["*"]
             allowCredentials: true
 
-      # If downstream services also add CORS, dedupe
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE

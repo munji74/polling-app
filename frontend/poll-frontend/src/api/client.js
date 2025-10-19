@@ -5,9 +5,18 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || 'http://localhost:8080',
 })
 
+// Ensure JSON posts
+api.defaults.headers.post['Content-Type'] = 'application/json'
+
 api.interceptors.request.use((config) => {
   const token = getToken()
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (token) {
+    // Make sure we don't lose existing headers
+    config.headers = {
+      ...(config.headers || {}),
+      Authorization: `Bearer ${token}`,
+    }
+  }
   return config
 })
 

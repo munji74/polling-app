@@ -20,7 +20,12 @@ export default function Login() {
       await login(email, password)
       navigate(from, { replace: true })
     } catch (err) {
-      setError(err?.response?.data?.message || 'Login failed')
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        'Login failed'
+      setError(msg)
     } finally {
       setSubmitting(false)
     }

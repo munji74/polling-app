@@ -20,7 +20,7 @@ public class JwtService {
     private String secret;
 
     @Value("${app.jwt.expires-in}")
-    private long expiresInMs;
+    private long jwtExpiresIn;
 
     private SecretKey key() {
         byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
@@ -29,7 +29,7 @@ public class JwtService {
 
     public String generateToken(UserDetails user, Map<String, Object> extraClaims) {
         Date now = new Date();
-        Date exp = new Date(now.getTime() + expiresInMs);
+        Date exp = new Date(now.getTime() + jwtExpiresIn);
         return Jwts.builder()
                 .subject(user.getUsername())
                 .claims(extraClaims)
