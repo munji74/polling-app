@@ -17,25 +17,34 @@ import java.util.List;
 public class PollController {
 
     private final PollService polls;
-    public PollController(PollService polls) { this.polls = polls; }
 
-    // PUBLIC
+    public PollController(PollService polls) {
+        this.polls = polls;
+    }
+
+    // PUBLIC (auth optional so UI can know if current user has voted)
     @GetMapping("/polls")
-    public List<PollResponse> list() { return polls.listAll(); }
+    public List<PollResponse> list(Authentication auth) {
+        var email = (auth != null) ? auth.getName() : null;
+        return polls.listAllForUser(email);
+    }
 
-    // PUBLIC
+    // PUBLIC (auth optional so UI can know if current user has voted)
     @GetMapping("/polls/{id}")
-    public PollResponse get(@PathVariable Long id) { return polls.getOne(id); }
+    public PollResponse get(@PathVariable Long id, Authentication auth) {
+        var email = (auth != null) ? auth.getName() : null;
+        return polls.getOneForUser(id, email);
+    }
 
     // AUTH REQUIRED (SecurityConfig enforces it)
     @PostMapping("/polls")
     public ResponseEntity<PollResponse> create(@RequestBody @Valid CreatePollRequest req, Authentication auth) {
-        var email = auth.getName(); // set by JwtAuthFilter
+        var email = auth.getName();
         var created = polls.create(req, email);
         return ResponseEntity.created(URI.create("/api/polls/" + created.id())).body(created);
     }
 
-    // AUTH REQUIRED
+    // AUTH REQUIRED — 409 returned if already voted
     @PostMapping("/polls/{id}/votes")
     public ResponseEntity<PollResponse> vote(@PathVariable Long id,
                                              @RequestBody @Valid VoteRequest req,
