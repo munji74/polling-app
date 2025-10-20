@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import api from '../api/client'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext' // Import useAuth
 
 // Import Ant Design icons
-import { PlusOutlined, CloseOutlined, CalendarOutlined } from '@ant-design/icons'
+import { PlusOutlined, CloseOutlined, CalendarOutlined, UserOutlined } from '@ant-design/icons'
 
 export default function CreatePoll() {
   const [question, setQuestion] = useState('')
@@ -12,6 +13,7 @@ export default function CreatePoll() {
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
   const navigate = useNavigate()
+  const { user } = useAuth() // Get user from auth context
 
   const updateOption = (i, val) => {
     setOptions((prev) => prev.map((o, idx) => (idx === i ? val : o)))
@@ -44,6 +46,21 @@ export default function CreatePoll() {
 
   return (
     <div className="max-w-xl mx-auto bg-white border rounded-lg p-6 shadow-sm">
+      {/* User Welcome Card */}
+      {user && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3">
+          <div className="p-2 bg-blue-100 rounded-full">
+            <UserOutlined className="text-blue-600 text-lg" />
+          </div>
+          <div>
+            <p className="text-sm text-blue-600 font-medium">Welcome back!</p>
+            <p className="text-lg font-semibold text-gray-800">
+              {user.name || user.email}
+            </p>
+          </div>
+        </div>
+      )}
+
       <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">Create a New Poll</h1>
 
       <form onSubmit={onSubmit} className="space-y-6">
