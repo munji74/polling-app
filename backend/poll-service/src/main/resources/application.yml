@@ -1,0 +1,18 @@
+server:
+  port: 8082
+
+spring:
+  datasource:
+    url: jdbc:mariadb://localhost:3306/polldb
+    username: app
+    password: app
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.format_sql: true
+      hibernate.dialect: org.hibernate.dialect.MariaDBDialect
+
+app:
+  jwt:
+    secret: "L+tc2CP2cSx2R6y4D1S0rME2SLYeiq2NwqxYnhtGe0LSHNaxt4beEmQixlpQ7GoPz6+zYd2alMISFnP2ecNJSQ=="
