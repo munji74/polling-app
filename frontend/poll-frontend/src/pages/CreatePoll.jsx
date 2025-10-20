@@ -2,6 +2,9 @@ import { useState } from 'react'
 import api from '../api/client'
 import { useNavigate } from 'react-router-dom'
 
+// Import Ant Design icons
+import { PlusOutlined, CloseOutlined, CalendarOutlined } from '@ant-design/icons'
+
 export default function CreatePoll() {
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState(['', ''])
@@ -40,14 +43,15 @@ export default function CreatePoll() {
   }
 
   return (
-    <div className="max-w-xl mx-auto bg-white border rounded-lg p-6">
-      <h1 className="text-xl font-semibold mb-4">Create a Poll</h1>
+    <div className="max-w-xl mx-auto bg-white border rounded-lg p-6 shadow-sm">
+      <h1 className="text-2xl font-bold mb-6 text-center text-gray-800">Create a New Poll</h1>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-6">
+        {/* Question Field */}
         <div>
-          <label className="block text-sm mb-1">Question</label>
+          <label className="block text-sm font-medium mb-2 text-gray-700">Poll Question</label>
           <input
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="What should we build next?"
@@ -55,56 +59,73 @@ export default function CreatePoll() {
           />
         </div>
 
+        {/* Options Section */}
         <div>
-          <label className="block text-sm mb-1">Options</label>
-          <div className="space-y-2">
+          <label className="block text-sm font-medium mb-3 text-gray-700">Poll Options</label>
+          <div className="space-y-3">
             {options.map((opt, i) => (
-              <div key={i} className="flex gap-2">
-                <input
-                  className="flex-1 border rounded px-3 py-2"
-                  value={opt}
-                  onChange={(e) => updateOption(i, e.target.value)}
-                  placeholder={`Option ${i + 1}`}
-                  required
-                />
+              <div key={i} className="flex gap-3 items-center">
+                <div className="flex-1 relative">
+                  <input
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                    value={opt}
+                    onChange={(e) => updateOption(i, e.target.value)}
+                    placeholder={`Option ${i + 1}`}
+                    required
+                  />
+                </div>
                 {options.length > 2 && (
                   <button
                     type="button"
-                    className="px-3 py-2 border rounded"
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition duration-200"
                     onClick={() => removeOption(i)}
+                    title="Remove option"
                   >
-                    Remove
+                    <CloseOutlined className="text-lg" />
                   </button>
                 )}
               </div>
             ))}
             <button
               type="button"
-              className="px-3 py-2 border rounded"
+              className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-500 transition duration-200 w-full justify-center"
               onClick={addOption}
             >
-              Add option
+              <PlusOutlined />
+              <span>Add another option</span>
             </button>
           </div>
+          <p className="text-xs text-gray-500 mt-2">Minimum 2 options required</p>
         </div>
 
+        {/* Expiration Date */}
         <div>
-          <label className="block text-sm mb-1">Expires At (optional)</label>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            <CalendarOutlined className="mr-2" />
+            Expiration Date (optional)
+          </label>
           <input
             type="datetime-local"
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
             value={expiresAt}
             onChange={(e) => setExpiresAt(e.target.value)}
           />
+          <p className="text-xs text-gray-500 mt-1">Leave empty if the poll should never expire</p>
         </div>
 
-        {error && <div className="text-red-600 text-sm">{error}</div>}
+        {/* Error Display */}
+        {error && (
+          <div className="text-red-600 text-sm bg-red-50 p-3 rounded-lg border border-red-200">
+            {error}
+          </div>
+        )}
 
+        {/* Submit Button */}
         <button
           disabled={saving}
-          className="px-4 py-2 rounded bg-gray-900 text-white disabled:opacity-50"
+          className="w-full bg-blue-600 text-white rounded-lg py-3 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200 font-medium text-lg"
         >
-          {saving ? 'Creating…' : 'Create Poll'}
+          {saving ? 'Creating Poll…' : 'Create Poll'}
         </button>
       </form>
     </div>
