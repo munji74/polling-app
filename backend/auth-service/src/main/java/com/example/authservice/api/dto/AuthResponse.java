@@ -1,5 +1,14 @@
 package com.example.authservice.api.dto;
 
-public record AuthResponse(String accessToken, String tokenType) {
-    public AuthResponse(String accessToken) { this(accessToken, "Bearer"); }
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class AuthResponse {
+    @JsonProperty("accessToken")
+    private String token;
 }
