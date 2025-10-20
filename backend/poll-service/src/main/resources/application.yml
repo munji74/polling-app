@@ -15,4 +15,4 @@ spring:
 
 app:
   jwt:
-    secret: "i8bU2JfE0Qj1oZ4r7xNA3wPq6sT9vYc2Ld5mHgKzR8nW4eX6pQ1tV3yZ5uA7bC9d"
+    secret: "L+tc2CP2cSx2R6y4D1S0rME2SLYeiq2NwqxYnhtGe0LSHNaxt4beEmQixlpQ7GoPz6+zYd2alMISFnP2ecNJSQ=="
