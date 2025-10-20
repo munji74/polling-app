@@ -7,7 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,41 +28,72 @@ public class PollService {
 
     /* -------------------- READ -------------------- */
 
-    /** Public list; if email is present, include hasVoted/userOptionId per poll. */
+    public List<PollResponse> listAll() {
+        return polls.findAll().stream().map(p -> toDtoWithCounts(p, Optional.empty())).toList();
+    }
+
+    public PollResponse getOne(Long id) {
+        var p = polls.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        return toDtoWithCounts(p, Optional.empty());
+    }
+
     public List<PollResponse> listAllForUser(String emailOrNull) {
         return polls.findAll().stream()
                 .map(p -> toDtoWithCounts(p, Optional.ofNullable(emailOrNull)))
                 .toList();
     }
 
-    /** Public get; if email is present, include hasVoted/userOptionId. */
     public PollResponse getOneForUser(Long id, String emailOrNull) {
         var p = polls.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         return toDtoWithCounts(p, Optional.ofNullable(emailOrNull));
     }
 
-    /* Backward-compat (used by existing controller methods if needed) */
-    public List<PollResponse> listAll() {
-        return listAllForUser(null);
-    }
-
-    public PollResponse getOne(Long id) {
-        return getOneForUser(id, null);
+    /** Polls created by the authenticated user */
+    public List<PollResponse> listMine(String creatorEmail) {
+        var list = polls.findByCreatedBy(creatorEmail);
+        return list.stream()
+                .map(p -> toDtoWithCounts(p, Optional.of(creatorEmail)))
+                .toList();
     }
 
     /* -------------------- WRITE -------------------- */
 
     @Transactional
     public PollResponse create(CreatePollRequest req, String creatorEmail) {
-        if (req.expiresAt().isBefore(Instant.now())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "expiresAt must be in the future");
+        // ----- sanitize & validate -----
+        var question = (req.question() == null ? "" : req.question().trim());
+        if (question.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Question is required.");
         }
+
+        var rawOptions = req.options() == null ? List.<String>of() : req.options();
+        // trim, drop blanks, de-dupe while keeping order
+        var seen = new HashSet<String>();
+        var cleanOptions = rawOptions.stream()
+                .map(s -> s == null ? "" : s.trim())
+                .filter(s -> !s.isEmpty())
+                .filter(seen::add)
+                .toList();
+
+        if (cleanOptions.size() < 2) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Provide at least two unique, non-empty options.");
+        }
+
+        Instant expiresAt = req.expiresAt();
+        if (expiresAt == null) {
+            // UI doesn’t send one → default to 7 days from now
+            expiresAt = Instant.now().plus(Duration.ofDays(7));
+        } else if (!expiresAt.isAfter(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "expiresAt must be in the future.");
+        }
+
+        // ----- create -----
         var p = new Poll();
-        p.setQuestion(req.question());
-        p.setExpiresAt(req.expiresAt());
+        p.setQuestion(question);
+        p.setExpiresAt(expiresAt);
         p.setCreatedBy(creatorEmail);
 
-        req.options().forEach(text -> {
+        cleanOptions.forEach(text -> {
             var opt = new PollOption();
             opt.setPoll(p);
             opt.setText(text);
@@ -68,12 +101,9 @@ public class PollService {
         });
 
         var saved = polls.save(p);
-        return toDtoWithCounts(saved, Optional.of(creatorEmail)); // creator hasn't voted; flags will be false
+        return toDtoWithCounts(saved, Optional.of(creatorEmail));
     }
 
-    /**
-     * One vote per user. If user already voted in this poll, return 409 CONFLICT.
-     */
     @Transactional
     public PollResponse vote(Long pollId, Long optionId, String voterEmail) {
         var poll = polls.findById(pollId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
@@ -81,14 +111,12 @@ public class PollService {
         if (poll.getExpiresAt().isBefore(Instant.now())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Poll expired");
         }
-
         if (votes.existsByPollIdAndVoter(pollId, voterEmail)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "You already voted in this poll.");
         }
 
         var opt = options.findById(optionId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Option not found"));
-
         if (!opt.getPoll().getId().equals(pollId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Option does not belong to poll");
         }
@@ -120,8 +148,6 @@ public class PollService {
         Long userOptionId = null;
 
         if (email.isPresent()) {
-            // Prefer fetching the actual vote so UI can preselect the option.
-            // Ensure VoteRepository has: Optional<Vote> findByPollIdAndVoter(Long pollId, String voter);
             var myVote = votes.findByPollIdAndVoter(p.getId(), email.get());
             if (myVote.isPresent()) {
                 hasVoted = true;

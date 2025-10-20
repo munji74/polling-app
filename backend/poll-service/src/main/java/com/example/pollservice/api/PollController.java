@@ -17,26 +17,23 @@ import java.util.List;
 public class PollController {
 
     private final PollService polls;
+    public PollController(PollService polls) { this.polls = polls; }
 
-    public PollController(PollService polls) {
-        this.polls = polls;
-    }
-
-    // PUBLIC (auth optional so UI can know if current user has voted)
+    // PUBLIC (auth optional so UI can learn hasVoted/userOptionId)
     @GetMapping("/polls")
     public List<PollResponse> list(Authentication auth) {
-        var email = (auth != null) ? auth.getName() : null;
+        var email = auth != null ? auth.getName() : null;
         return polls.listAllForUser(email);
     }
 
-    // PUBLIC (auth optional so UI can know if current user has voted)
+    // PUBLIC (auth optional)
     @GetMapping("/polls/{id}")
     public PollResponse get(@PathVariable Long id, Authentication auth) {
-        var email = (auth != null) ? auth.getName() : null;
+        var email = auth != null ? auth.getName() : null;
         return polls.getOneForUser(id, email);
     }
 
-    // AUTH REQUIRED (SecurityConfig enforces it)
+    // AUTH REQUIRED — create; expiresAt defaults if not provided
     @PostMapping("/polls")
     public ResponseEntity<PollResponse> create(@RequestBody @Valid CreatePollRequest req, Authentication auth) {
         var email = auth.getName();
@@ -44,7 +41,19 @@ public class PollController {
         return ResponseEntity.created(URI.create("/api/polls/" + created.id())).body(created);
     }
 
-    // AUTH REQUIRED — 409 returned if already voted
+    // AUTH REQUIRED — user's own polls
+    @GetMapping("/polls/mine")
+    public List<PollResponse> mine(Authentication auth) {
+        return polls.listMine(auth.getName());
+    }
+
+    // Alias for some frontends that call /api/users/me/polls
+    @GetMapping("/users/me/polls")
+    public List<PollResponse> mineAlias(Authentication auth) {
+        return polls.listMine(auth.getName());
+    }
+
+    // AUTH REQUIRED — one vote per user
     @PostMapping("/polls/{id}/votes")
     public ResponseEntity<PollResponse> vote(@PathVariable Long id,
                                              @RequestBody @Valid VoteRequest req,
