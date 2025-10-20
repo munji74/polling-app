@@ -18,10 +18,9 @@ export function AuthProvider({ children }) {
       const token = getToken()
       if (!token) return setLoading(false)
       try {
-        // 🔐 Force the header explicitly here
         const { data } = await api.get('/api/auth/me', { headers: authHeader() })
         setUser(data)
-      } catch (e) {
+      } catch {
         clearToken()
         setUser(null)
       } finally {
@@ -37,19 +36,51 @@ export function AuthProvider({ children }) {
     if (!token) throw new Error('Login succeeded but no token returned')
 
     setToken(token)
-
-    // 🔐 Force the header on this call too
     const me = await api.get('/api/auth/me', { headers: authHeader() })
     setUser(me.data)
   }
 
-  const register = async (name, email, password) => {
-    const res = await api.post('/api/auth/register', { name, email, password })
-    const token = res?.data?.accessToken || res?.data?.token || res?.data?.jwt || null
-    if (token) {
-      setToken(token)
-      const me = await api.get('/api/auth/me', { headers: authHeader() })
-      setUser(me.data)
+  /**
+   * Register user.
+   * - Sends passwordConfirm
+   * - Surfaces 409 (email in use) and 400 (field validation map) nicely
+   * - If backend returns a token, auto-signs in
+   */
+  const register = async ({ name, email, password, passwordConfirm }) => {
+    try {
+      const res = await api.post('/api/auth/register', {
+        name,
+        email,
+        password,
+        passwordConfirm,
+      })
+
+      const token =
+        res?.data?.accessToken || res?.data?.token || res?.data?.jwt || null
+      if (token) {
+        setToken(token)
+        const me = await api.get('/api/auth/me', { headers: authHeader() })
+        setUser(me.data)
+      }
+      return true
+    } catch (err) {
+      const status = err?.response?.status
+      const data = err?.response?.data
+
+      // Email already used (AuthController returns 409)
+      if (status === 409) {
+        // prefer structured map if backend sends it; otherwise send a simple map
+        const map = typeof data === 'object' && data ? data : { email: 'Email already in use' }
+        throw map
+      }
+
+      // Validation failed (RestExceptionHandler returns a { field: message } map)
+      if (status === 400 && typeof data === 'object' && data) {
+        throw data
+      }
+
+      // Fallback readable message
+      throw (data?.message || data?.error || 'Registration failed')
     }
   }
 

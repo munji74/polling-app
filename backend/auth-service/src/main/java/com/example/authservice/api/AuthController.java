@@ -10,6 +10,7 @@ import com.example.authservice.user.User;
 import com.example.authservice.user.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +21,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -37,31 +39,43 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest req) {
         String email = req.email().toLowerCase();
-        if (users.existsByEmail(email)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Email already in use"));
+
+        if (!req.password().equals(req.passwordConfirm())) {
+            return ResponseEntity.badRequest().body(Map.of("passwordConfirm", "Passwords do not match"));
         }
+        if (users.existsByEmail(email)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("email", "Email already in use"));
+        }
+
         User u = new User();
         u.setName(req.name());
         u.setEmail(email);
         u.setPasswordHash(encoder.encode(req.password()));
         u.setRoles(Set.of(Role.USER));
         users.save(u);
-        return ResponseEntity.ok(Map.of("message", "Registered"));
+
+        // (Optional) auto-login on register
+        String token = jwt.generateToken(
+                new org.springframework.security.core.userdetails.User(
+                        email, "", java.util.List.of(() -> "ROLE_USER")
+                ),
+                Map.of("roles", java.util.List.of("ROLE_USER"))
+        );
+
+        return ResponseEntity
+                .created(URI.create("/api/auth/users/" + u.getId()))
+                .body(Map.of("accessToken", token, "tokenType", "Bearer"));
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid LoginRequest req) {
         try {
             Authentication auth = authManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            req.email().toLowerCase(), req.password()
-                    )
+                    new UsernamePasswordAuthenticationToken(req.email().toLowerCase(), req.password())
             );
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-            Object principalObj = auth.getPrincipal();
-            if (!(principalObj instanceof UserDetails principal)) {
-                // Extremely rare, but avoid ClassCastException
+            if (!(auth.getPrincipal() instanceof UserDetails principal)) {
                 return ResponseEntity.status(500).body(Map.of("error", "Unexpected principal type"));
             }
 
@@ -71,10 +85,8 @@ public class AuthController {
             );
             return ResponseEntity.ok(new AuthResponse(token));
         } catch (AuthenticationException badCreds) {
-            // wrong email/password, locked, disabled, etc.
             return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
         } catch (Exception unexpected) {
-            // anything else (NPE/ClassCast/etc.). Keep it generic.
             return ResponseEntity.status(500).body(Map.of("error", "Login failed"));
         }
     }
@@ -82,7 +94,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<MeResponse> me() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth.getPrincipal() == null || !(auth.getPrincipal() instanceof UserDetails principal)) {
+        if (auth == null || !(auth.getPrincipal() instanceof UserDetails principal)) {
             return ResponseEntity.status(401).build();
         }
         var user = users.findByEmail(principal.getUsername()).orElseThrow();
