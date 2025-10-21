@@ -1,6 +1,18 @@
 import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../api/client'
+import {
+  PlusOutlined,
+  EyeOutlined,
+  DeleteOutlined,
+  ClockCircleOutlined,
+  BarChartOutlined,
+  CalendarOutlined,
+  ExclamationCircleOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined,
+  RocketOutlined
+} from '@ant-design/icons'
 
 export default function MyPolls() {
   const [polls, setPolls] = useState([])
@@ -48,40 +60,90 @@ export default function MyPolls() {
     [polls]
   )
 
-  if (loading) return <div>Loading your polls...</div>
-  if (error) return <div className="text-red-600">{error}</div>
+  if (loading) return (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <ClockCircleOutlined className="text-4xl text-gray-400 mb-4" />
+        <p className="text-gray-600">Loading your polls...</p>
+      </div>
+    </div>
+  )
+
+  if (error) return (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center text-red-600">
+        <ExclamationCircleOutlined className="text-4xl mb-4" />
+        <p>{error}</p>
+      </div>
+    </div>
+  )
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl mx-auto space-y-8 p-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">My Polls</h1>
-        <Link to="/create" className="px-3 py-2 rounded bg-gray-900 text-white">
-          New Poll
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <BarChartOutlined className="text-blue-600" />
+            My Polls
+          </h1>
+          <p className="text-gray-500 mt-1">Manage and view your created polls</p>
+        </div>
+        <Link
+          to="/create"
+          className="flex items-center gap-2 px-4 py-3 rounded-lg bg-gray-900 text-white hover:bg-gray-700 transition-colors"
+        >
+          <PlusOutlined />
+          <span>New Poll</span>
         </Link>
       </div>
 
-      <section>
-        <h2 className="text-sm font-medium text-gray-600 mb-2">Active</h2>
+      {/* Active Polls Section */}
+      <section className="bg-white rounded-xl border p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <CheckCircleOutlined className="text-green-600 text-xl" />
+          <h2 className="text-lg font-semibold text-gray-900">Active Polls</h2>
+          <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+            {active.length} polls
+          </span>
+        </div>
         <div className="grid gap-4">
           {active.length ? (
-            active.map(p => (
-              <MyPollRow key={p.id} poll={p} />
+            active.map(poll => (
+              <MyPollRow key={poll.id} poll={poll} isActive={true} />
             ))
           ) : (
-            <div className="text-sm text-gray-500">No active polls.</div>
+            <div className="text-center py-8 text-gray-500">
+              <RocketOutlined className="text-4xl mb-3 text-gray-300" />
+              <p>No active polls yet</p>
+              <Link to="/create" className="text-blue-600 hover:underline text-sm flex items-center gap-1 justify-center">
+                <PlusOutlined />
+                Create your first poll
+              </Link>
+            </div>
           )}
         </div>
       </section>
 
-      <section>
-        <h2 className="text-sm font-medium text-gray-600 mb-2">Expired</h2>
+      {/* Expired Polls Section */}
+      <section className="bg-white rounded-xl border p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <ClockCircleOutlined className="text-gray-400 text-xl" />
+          <h2 className="text-lg font-semibold text-gray-900">Expired Polls</h2>
+          <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full font-medium">
+            {expired.length} polls
+          </span>
+        </div>
         <div className="grid gap-4">
           {expired.length ? (
-            expired.map(p => (
-              <MyPollRow key={p.id} poll={p} />
+            expired.map(poll => (
+              <MyPollRow key={poll.id} poll={poll} isActive={false} />
             ))
           ) : (
-            <div className="text-sm text-gray-500">No expired polls.</div>
+            <div className="text-center py-8 text-gray-500">
+              <FileTextOutlined className="text-4xl mb-3 text-gray-300" />
+              <p>No expired polls</p>
+            </div>
           )}
         </div>
       </section>
@@ -89,34 +151,52 @@ export default function MyPolls() {
   )
 }
 
-function MyPollRow({ poll }) {
+function MyPollRow({ poll, isActive }) {
   const totalVotes = (poll.options || []).reduce((s, o) => s + (o.votes || 0), 0)
 
   return (
-    <div className="p-4 bg-white rounded-lg border">
+    <div className={`p-5 rounded-lg border-l-4 ${
+      isActive
+        ? 'border-l-green-500 bg-green-50 hover:bg-green-100'
+        : 'border-l-gray-400 bg-gray-50 hover:bg-gray-100'
+    } transition-colors`}>
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-base font-semibold">{poll.question}</h3>
-          <p className="text-xs text-gray-500 mt-1">Total votes: {totalVotes}</p>
-          {poll.expiresAt && (
-            <p className="text-xs text-gray-500">
-              Expires: {new Date(poll.expiresAt).toLocaleString()}
-            </p>
-          )}
+        <div className="flex-1">
+          <h3 className="text-base font-semibold text-gray-900 mb-2">{poll.question}</h3>
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-1">
+              <BarChartOutlined className="text-gray-400" />
+              <span>{totalVotes} votes</span>
+            </div>
+            {poll.expiresAt && (
+              <div className="flex items-center gap-1">
+                <CalendarOutlined className="text-gray-400" />
+                <span>Expires: {new Date(poll.expiresAt).toLocaleDateString()}</span>
+              </div>
+            )}
+            {!isActive && (
+              <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                <ExclamationCircleOutlined className="text-xs" />
+                Expired
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Link
             to={`/polls/${poll.id}`}
-            className="text-blue-600 hover:underline text-sm"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors text-sm"
           >
-            View
+            <EyeOutlined />
+            <span>View</span>
           </Link>
           {/* Optional: uncomment if your backend supports deletion
           <button
             onClick={() => handleDelete(poll.id)}
-            className="text-sm px-2 py-1 border rounded"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 hover:border-red-500 hover:text-red-600 transition-colors text-sm"
           >
-            Delete
+            <DeleteOutlined />
+            <span>Delete</span>
           </button>
           */}
         </div>
