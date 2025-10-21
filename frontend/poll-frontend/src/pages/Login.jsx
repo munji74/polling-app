@@ -126,12 +126,7 @@ export default function Login() {
           </Link>
         </p>
 
-        {/* Forgot password link */}
-        <div className="text-center">
-          <Link className="text-sm text-blue-600 hover:underline" to="/forgot-password">
-            Forgot your password?
-          </Link>
-        </div>
+
       </form>
     </div>
   )

@@ -119,7 +119,7 @@ export default function CreatePoll() {
         <div>
           <label className="block text-sm font-medium mb-2 text-gray-700">
             <CalendarOutlined className="mr-2" />
-            Expiration Date (optional)
+            Expiration Date
           </label>
           <input
             type="datetime-local"
@@ -140,7 +140,7 @@ export default function CreatePoll() {
         {/* Submit Button */}
         <button
           disabled={saving}
-          className="w-full bg-blue-600 text-white rounded-lg py-3 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200 font-medium text-lg"
+          className="w-full bg-black text-white rounded-lg py-3 hover:bg-gray-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition duration-200 font-medium text-lg"
         >
           {saving ? 'Creating Poll…' : 'Create Poll'}
         </button>
