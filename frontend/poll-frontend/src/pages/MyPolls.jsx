@@ -9,7 +9,9 @@ import {
   BarChartOutlined,
   CalendarOutlined,
   ExclamationCircleOutlined,
-  CheckCircleOutlined
+  CheckCircleOutlined,
+  FileTextOutlined,
+  RocketOutlined
 } from '@ant-design/icons'
 
 export default function MyPolls() {
@@ -112,9 +114,10 @@ export default function MyPolls() {
             ))
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <BarChartOutlined className="text-4xl mb-3 text-gray-300" />
+              <RocketOutlined className="text-4xl mb-3 text-gray-300" />
               <p>No active polls yet</p>
-              <Link to="/create" className="text-blue-600 hover:underline text-sm">
+              <Link to="/create" className="text-blue-600 hover:underline text-sm flex items-center gap-1 justify-center">
+                <PlusOutlined />
                 Create your first poll
               </Link>
             </div>
@@ -138,7 +141,7 @@ export default function MyPolls() {
             ))
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <ClockCircleOutlined className="text-4xl mb-3 text-gray-300" />
+              <FileTextOutlined className="text-4xl mb-3 text-gray-300" />
               <p>No expired polls</p>
             </div>
           )}
@@ -172,7 +175,8 @@ function MyPollRow({ poll, isActive }) {
               </div>
             )}
             {!isActive && (
-              <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+              <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 text-xs rounded-full">
+                <ExclamationCircleOutlined className="text-xs" />
                 Expired
               </span>
             )}

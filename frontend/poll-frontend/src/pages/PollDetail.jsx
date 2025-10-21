@@ -3,6 +3,14 @@ import { useParams } from 'react-router-dom';
 import api from '../api/client';
 import OptionBar from '../components/OptionBar';
 import { useAuth } from '../context/AuthContext';
+import {
+  BarChartOutlined,
+  ClockCircleOutlined,
+  ExclamationCircleOutlined,
+  CheckCircleOutlined,
+  LockOutlined,
+  CheckOutlined
+} from '@ant-design/icons';
 
 export default function PollDetail() {
   const { id } = useParams();
@@ -68,7 +76,7 @@ export default function PollDetail() {
     <div className="flex items-center justify-center py-12">
       <div className="text-center text-red-600">
         <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-          <span className="text-red-600 font-bold">!</span>
+          <ExclamationCircleOutlined className="text-red-600 text-sm" />
         </div>
         <p>{error}</p>
       </div>
@@ -89,17 +97,13 @@ export default function PollDetail() {
           {/* Poll Metadata */}
           <div className="flex items-center gap-4 text-sm text-gray-600">
             <div className="flex items-center gap-1">
-              <div className="w-4 h-4 bg-gray-400 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs">📊</span>
-              </div>
+              <BarChartOutlined className="text-gray-400 text-base" />
               <span>{totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}</span>
             </div>
 
             {poll.expiresAt && (
               <div className="flex items-center gap-1">
-                <div className="w-4 h-4 bg-gray-400 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">⏰</span>
-                </div>
+                <ClockCircleOutlined className="text-gray-400 text-base" />
                 <span>
                   {expired ? 'Expired' : 'Expires'} {new Date(poll.expiresAt).toLocaleDateString()}
                 </span>
@@ -110,14 +114,14 @@ export default function PollDetail() {
 
         {expired && (
           <span className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
-            <span className="text-red-600">⚠️</span>
+            <ExclamationCircleOutlined className="text-xs" />
             Expired
           </span>
         )}
 
         {alreadyVoted && !expired && (
           <span className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-            <span className="text-green-600">✓</span>
+            <CheckCircleOutlined className="text-xs" />
             Voted
           </span>
         )}
@@ -186,13 +190,15 @@ export default function PollDetail() {
             onClick={submitVote}
             className="flex items-center gap-2 px-6 py-3 rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
-            <span>🗳️</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             {alreadyVoted ? 'Already Voted' : 'Cast Vote'}
           </button>
 
           {!user && (
             <div className="flex items-center gap-2 text-orange-600 text-sm">
-              <span>🔒</span>
+              <LockOutlined />
               <span>Login to vote</span>
             </div>
           )}
@@ -206,7 +212,7 @@ export default function PollDetail() {
 
         {alreadyVoted && (
           <div className="text-sm text-green-600 flex items-center gap-1">
-            <span>✅</span>
+            <CheckOutlined />
             <span>Your vote has been recorded</span>
           </div>
         )}
